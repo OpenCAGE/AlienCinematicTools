@@ -185,5 +185,6 @@
   <ItemGroup>
     <None Include="Resources\imgui_PixelShader.cso" />
     <None Include="Resources\imgui_VertexShader.cso" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

@@ -8,8 +8,6 @@
 #include <unordered_map>
 #include <Windows.h>
 
-#pragma comment(lib, "libMinHook.x86.lib")
-
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
 typedef BOOL(WINAPI* tSetCursorPos)(int, int);
