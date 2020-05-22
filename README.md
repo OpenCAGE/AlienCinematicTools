@@ -1,11 +1,15 @@
-### This project is powered by
-[ImGui](https://github.com/ocornut/imgui) by Omar Cornut
+## Alien: Isolation Cinematic Tools
 
-[MinHook](https://github.com/TsudaKageyu/minhook) by Tsuda Kageyu
+This is a continuation of the Alien: Isolation Cinematic Tools by [Hattiwatti](https://github.com/Hattiwatti), with the intention of adding extra useful features for modding the game.
 
-[inih](https://github.com/benhoyt/inih) by Ben Hoyt
+### How to build
 
-[DirectXTK](https://github.com/Microsoft/DirectXTK) by Microsoft
+The project must be built in release mode, for x86 systems. This is the default project configuration.
 
-### Cinematic Tools...
-... is a hack to allow free camera movemenet in different games. This allows you to create pretty screenshots and videos. Depending on the game it also includes engine post-processing effects like Depth of field, LOD fixes, time freeze and some other useful features.
+Use Visual Studio VC 140 to compile, and make sure to have restored all Nuget packages.
+
+### How to use
+
+To hook the cinematic tools into Alien: Isolation, run the game, and then launch "inject.bat" in the root of the project.
+
+This utilises [Injector](https://github.com/nefarius/Injector) - a project by [Benjamin Höglinger](https://github.com/nefarius) (thanks!).

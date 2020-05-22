@@ -1,0 +1,1 @@
+Injector.exe --process-name AI.exe --inject "CT_AlienIsolation.dll"
