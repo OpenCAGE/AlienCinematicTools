@@ -1,4 +1,5 @@
 #pragma once
+#define BOOST_SYSTEM_NO_DEPRECATED
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include "Util/Util.h"
