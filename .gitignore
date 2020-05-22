@@ -263,3 +263,7 @@ __pycache__/
 
 # Custom
 **/theHunter CotW Cinematic Tools
+
+!CT_AlienIsolation.dll
+CT_AlienIsolation.iobj
+CT_AlienIsolation.ipdb
