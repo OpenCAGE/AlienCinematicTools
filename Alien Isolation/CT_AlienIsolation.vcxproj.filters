@@ -37,6 +37,9 @@
     <Filter Include="Source Files\Tools">
       <UniqueIdentifier>{d5489722-4e47-49db-b8be-1231dbc72f8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\imguizmo">
+      <UniqueIdentifier>{24aa1a83-15d6-4e33-8eb3-a2ce3b1dc2ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UI.cpp">
@@ -101,6 +104,18 @@
     </ClCompile>
     <ClCompile Include="Tools\VisualsController.cpp">
       <Filter>Source Files\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="imguizmo\ImGuizmo.cpp">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="imguizmo\ImSequencer.cpp">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="imguizmo\ImCurveEdit.cpp">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="imguizmo\ImGradient.cpp">
+      <Filter>Source Files\imguizmo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +190,18 @@
     </ClInclude>
     <ClInclude Include="Tools\VisualsController.h">
       <Filter>Source Files\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="imguizmo\ImGuizmo.h">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="imguizmo\ImSequencer.h">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="imguizmo\ImCurveEdit.h">
+      <Filter>Source Files\imguizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="imguizmo\ImGradient.h">
+      <Filter>Source Files\imguizmo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

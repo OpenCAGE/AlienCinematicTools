@@ -3,6 +3,7 @@
 #include "Util/Util.h"
 #include "Util/ImGuiEXT.h"
 #include "imgui/imgui_impl_dx11.h"
+#include "imguizmo/ImGuizmo.h"
 #include "resource.h"
 
 #include <winerror.h>
@@ -133,7 +134,6 @@ static ImVec2 ScaledImVec2(float x, float y)
 
 void UI::Draw()
 {
-  if (!m_Enabled) return;
   if (m_IsResizing)
   {
     // I think it's a good idea to skip some frames after a resize
@@ -152,101 +152,165 @@ void UI::Draw()
 
   ImGuiIO& io = ImGui::GetIO();
   ImGui_ImplDX11_NewFrame();
+  ImGuizmo::BeginFrame();
 
-  ImGui::SetNextWindowSize(ScaledImVec2(800, 460));
-  ImGui::Begin("Cinematic Tools", nullptr, ImGuiWindowFlags_NoResize);
+  ImGui::Begin("ImGuizmo Tests");
+  ImGui::SameLine();
+  if (ImGui::ToggleButton(g_mainHandle->GetCameraManager()->m_CameraEnabled ? "Disable Free Camera" : "Enable Free Camera", ImVec2(150, 30), g_mainHandle->GetCameraManager()->m_CameraEnabled, true))
+      g_mainHandle->GetCameraManager()->ToggleCamera();
+  ImGui::SameLine();
+  g_mainHandle->GetCameraManager()->m_UIRequestReset |= ImGui::Button("Reset Free Camera", ImVec2(150, 30));
+
+  ImGui::Separator();
+
+  /*
+  CATHODE::AICamera* pCamera = CATHODE::Main::Singleton()->m_CameraManager->m_ActiveCamera;
+  float matrixTranslation[3] = { pCamera->m_State[0].m_Position.x, pCamera->m_State[0].m_Position.y, pCamera->m_State[0].m_Position.z };
+  float matrixRotation[3] = { pCamera->m_State[0].m_Rotation.x, pCamera->m_State[0].m_Rotation.y, pCamera->m_State[0].m_Rotation.z };
+  ImGui::InputFloat3("Player Camera Position", matrixTranslation, 3);
+  ImGui::InputFloat3("Player Camera Rotation", matrixRotation, 3);
+  ImGui::InputFloat("Player Camera Far", &pCamera->m_State[0].m_FarPlane);
+  ImGui::InputFloat("Player Camera Near", &pCamera->m_State[0].m_NearPlane);
+  ImGui::InputFloat("Player Camera FOV", &pCamera->m_State[0].m_FieldOfView);
+  ImGui::Separator();
+  */
+
+  Camera& camera = g_mainHandle->GetCameraManager()->GetCamera();
+  float* matrixTranslation2[3] = { &camera.Position.x, &camera.Position.y, &camera.Position.z };
+  float* matrixRotation2[3] = { &camera.Rotation.x, &camera.Rotation.y, &camera.Rotation.z };
+  ImGui::InputFloat3("Free Camera Position", *matrixTranslation2, 3);
+  ImGui::InputFloat3("Free Camera Rotation", *matrixRotation2, 3);
+
+  CharacterList const& chrList = g_mainHandle->GetCharacterController()->GetCharacters();
+  if (chrList.Count > 0)
   {
-    ImVec2 windowPos = ImGui::GetWindowPos();
-    ImGui::Dummy(ImVec2(0, 20));
+      ImGui::Separator();
 
-    ImGui::GetWindowDrawList()->AddImage(m_BgImages[0].pSRV.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 1120, windowPos.y + 644));
-    //if (m_isFading)
-    //  ImGui::GetWindowDrawList()->AddImage(m_bgImages[m_nextIndex].pShaderResourceView.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 800, windowPos.y + 460),
-    //    ImVec2(0, 0), ImVec2(1, 1), ImGui::ColorConvertFloat4ToU32(ImVec4(1, 1, 1, m_opacity)));
+      CATHODE::AICamera* pCamera = CATHODE::Main::Singleton()->m_CameraManager->m_ActiveCamera;
 
-    ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 1120, windowPos.y + 644), 0x10000000);
-    ImGui::GetWindowDrawList()->AddImage(m_TitleImage.pSRV.Get(), ImVec2(windowPos.x + 369, windowPos.y + 85), ImVec2(windowPos.x + 751, windowPos.y + 131));
+      XMVECTOR qRotation = XMLoadFloat4(&pCamera->m_State[0].m_Rotation);
+      XMVECTOR vEyePos = XMLoadFloat3(&pCamera->m_State[0].m_Position);
 
-    ImGui::PushFont(io.Fonts->Fonts[2]);
-    ImGui::Dummy(ImVec2(143, 33));
-    ImGui::SameLine(0, 0);
+      XMMATRIX rotMatrix = XMMatrixRotationQuaternion(qRotation);
+      XMMATRIX viewMatrix = XMMatrixLookToRH(vEyePos, rotMatrix.r[2], XMVectorSet(0, 1, 0, 0));
+      XMMATRIX projMatrix = XMMatrixPerspectiveFovRH(/*pCamera->m_State[0].m_FieldOfView*/75, 1920 / 1080.f, 0.01f, 1000.f);
 
-    if (ImGui::ToggleButton("CAMERA", ImVec2(158, 33), m_SelectedMenu == UIMenu_Camera, false))
-      m_SelectedMenu = UIMenu_Camera;
+      ImGui::InputFloat("fov",& pCamera->m_State[0].m_FieldOfView);
 
-    ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("VISUALS", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
-      m_SelectedMenu = UIMenu_Visuals;
+      XMFLOAT4X4 viewMatrix4x4;
+      XMStoreFloat4x4(&viewMatrix4x4, viewMatrix);
+      XMFLOAT4X4 projMatrix4x4;
+      XMStoreFloat4x4(&projMatrix4x4, projMatrix);
 
-    ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("MISC", ImVec2(158, 33), m_SelectedMenu == UIMenu_Misc, false))
-      m_SelectedMenu = UIMenu_Misc;
+      for (int i = 0; i < chrList.Count; i++) {
+          ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+          ImGuizmo::Manipulate(&viewMatrix4x4.m[0][0], &projMatrix4x4.m[0][0], ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &chrList.Characters[i]->m_Transform.m[0][0], NULL, NULL);
 
-    ImGui::PopFont();
-
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 143, windowPos.y + 76), ImVec2(windowPos.x + 301, windowPos.y + 76), 0xFF1C79E5, 2);
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 321, windowPos.y + 76), ImVec2(windowPos.x + 479, windowPos.y + 76), 0xFF1C79E5, 2);
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 499, windowPos.y + 76), ImVec2(windowPos.x + 657, windowPos.y + 76), 0xFF1C79E5, 2);
-
-    ImGui::Dummy(ImVec2(0, 50));
-    ImGui::Dummy(ImVec2(0, 0));
-    ImGui::SameLine(10);
-
-    {
-      ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
-      
-      if (m_SelectedMenu == UIMenu_Camera)
-        g_mainHandle->GetCameraManager()->DrawUI();
-      else if (m_SelectedMenu == UIMenu_Visuals)
-      {
-        g_mainHandle->GetVisualsController()->DrawUI();
+          //Get values from manipulation
+          float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+          ImGuizmo::DecomposeMatrixToComponents(&chrList.Characters[i]->m_Transform.m[0][0], matrixTranslation, matrixRotation, matrixScale);
+          ImGui::InputFloat3(chrList.Names[i], matrixTranslation, 3);
       }
-      else if (m_SelectedMenu == UIMenu_Misc)
+  }
+
+  ImGui::End();
+
+  if (m_Enabled) {
+      ImGui::SetNextWindowSize(ScaledImVec2(800, 460));
+      ImGui::Begin("Cinematic Tools", nullptr, ImGuiWindowFlags_NoResize);
       {
-        ImGui::Columns(3, "miscColumns", false);
-        ImGui::NextColumn();
-        ImGui::SetColumnOffset(-1, 5);
+          ImVec2 windowPos = ImGui::GetWindowPos();
+          ImGui::Dummy(ImVec2(0, 20));
 
-        ImGui::PushFont(io.Fonts->Fonts[4]);
-        ImGui::PushItemWidth(130);
+          ImGui::GetWindowDrawList()->AddImage(m_BgImages[0].pSRV.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 1120, windowPos.y + 644));
+          //if (m_isFading)
+          //  ImGui::GetWindowDrawList()->AddImage(m_bgImages[m_nextIndex].pShaderResourceView.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 800, windowPos.y + 460),
+          //    ImVec2(0, 0), ImVec2(1, 1), ImGui::ColorConvertFloat4ToU32(ImVec4(1, 1, 1, m_opacity)));
 
-        ImGui::PushFont(io.Fonts->Fonts[3]);
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 1));
-        ImGui::Dummy(ImVec2(0, 10));
-        ImGui::DrawWithBorders([=]
-        {
-          if (ImGui::Button("Config", ImVec2(158, 33)))
-            g_mainHandle->GetInputSystem()->ShowUI();
+          ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 1120, windowPos.y + 644), 0x10000000);
+          ImGui::GetWindowDrawList()->AddImage(m_TitleImage.pSRV.Get(), ImVec2(windowPos.x + 369, windowPos.y + 85), ImVec2(windowPos.x + 751, windowPos.y + 131));
 
-        });
+          ImGui::PushFont(io.Fonts->Fonts[2]);
+          ImGui::Dummy(ImVec2(143, 33));
+          ImGui::SameLine(0, 0);
 
-        ImGui::PopStyleColor();
-        ImGui::PopFont();
-        
-        ImGui::NextColumn();
-        ImGui::SetColumnOffset(-1, 388.5f);
+          if (ImGui::ToggleButton("CAMERA", ImVec2(158, 33), m_SelectedMenu == UIMenu_Camera, false))
+              m_SelectedMenu = UIMenu_Camera;
 
-        ImGui::PushFont(io.Fonts->Fonts[2]);
-        ImGui::Dummy(ImVec2(0, 5));
-        ImGui::Text("CREDITS"); 
-        ImGui::PopFont();
+          ImGui::SameLine(0, 20);
+          if (ImGui::ToggleButton("VISUALS", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
+              m_SelectedMenu = UIMenu_Visuals;
 
-        ImGui::TextWrapped(g_creditsText);
+          ImGui::SameLine(0, 20);
+          if (ImGui::ToggleButton("MISC", ImVec2(158, 33), m_SelectedMenu == UIMenu_Misc, false))
+              m_SelectedMenu = UIMenu_Misc;
 
-        ImGui::PopFont();
-      }
-      ImGui::EndChild();
-    }
+          ImGui::PopFont();
 
-  } ImGui::End();
+          ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 143, windowPos.y + 76), ImVec2(windowPos.x + 301, windowPos.y + 76), 0xFF1C79E5, 2);
+          ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 321, windowPos.y + 76), ImVec2(windowPos.x + 479, windowPos.y + 76), 0xFF1C79E5, 2);
+          ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 499, windowPos.y + 76), ImVec2(windowPos.x + 657, windowPos.y + 76), 0xFF1C79E5, 2);
 
-  g_mainHandle->GetInputSystem()->DrawUI();
+          ImGui::Dummy(ImVec2(0, 50));
+          ImGui::Dummy(ImVec2(0, 0));
+          ImGui::SameLine(10);
+
+          {
+              ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
+
+              if (m_SelectedMenu == UIMenu_Camera)
+                  g_mainHandle->GetCameraManager()->DrawUI();
+              else if (m_SelectedMenu == UIMenu_Visuals)
+              {
+                  g_mainHandle->GetVisualsController()->DrawUI();
+              }
+              else if (m_SelectedMenu == UIMenu_Misc)
+              {
+                  ImGui::Columns(3, "miscColumns", false);
+                  ImGui::NextColumn();
+                  ImGui::SetColumnOffset(-1, 5);
+
+                  ImGui::PushFont(io.Fonts->Fonts[4]);
+                  ImGui::PushItemWidth(130);
+
+                  ImGui::PushFont(io.Fonts->Fonts[3]);
+                  ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 1));
+                  ImGui::Dummy(ImVec2(0, 10));
+                  ImGui::DrawWithBorders([=]
+                      {
+                          if (ImGui::Button("Config", ImVec2(158, 33)))
+                              g_mainHandle->GetInputSystem()->ShowUI();
+
+                      });
+
+                  ImGui::PopStyleColor();
+                  ImGui::PopFont();
+
+                  ImGui::NextColumn();
+                  ImGui::SetColumnOffset(-1, 388.5f);
+
+                  ImGui::PushFont(io.Fonts->Fonts[2]);
+                  ImGui::Dummy(ImVec2(0, 5));
+                  ImGui::Text("CREDITS");
+                  ImGui::PopFont();
+
+                  ImGui::TextWrapped(g_creditsText);
+
+                  ImGui::PopFont();
+              }
+              ImGui::EndChild();
+          }
+
+      } ImGui::End();
+
+      g_mainHandle->GetInputSystem()->DrawUI();
+
+      m_HasKeyboardFocus = ImGui::GetIO().WantCaptureKeyboard;
+      m_HasMouseFocus = ImGui::GetIO().WantCaptureMouse;
+  }
 
   ImGui::Render();
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-  m_HasKeyboardFocus = ImGui::GetIO().WantCaptureKeyboard;
-  m_HasMouseFocus = ImGui::GetIO().WantCaptureMouse;
 }
 
 void UI::OnResize()

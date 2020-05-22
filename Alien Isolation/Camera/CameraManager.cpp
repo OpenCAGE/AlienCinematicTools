@@ -8,6 +8,8 @@
 #include <iostream>
 #include <Windows.h>
 
+#include "../imguizmo/ImGuizmo.h"
+
 // Helper for ImGui combo
 static auto ProfileNameGetter = [](void* vec, int idx, const char** out_text)
 {

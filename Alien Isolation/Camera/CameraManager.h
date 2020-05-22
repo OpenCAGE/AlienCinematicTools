@@ -60,7 +60,13 @@ public:
   void ReadConfig(INIReader* pReader);
   const std::string GetConfig();
 
-  Camera const& GetCamera() { return m_Camera; }
+  Camera& GetCamera() { return m_Camera; }
+
+  void ToggleCamera();
+  void ResetCamera();
+
+  bool m_CameraEnabled;
+  bool m_UIRequestReset;
 
 private:
   // Updates camera position and rotation
@@ -68,9 +74,6 @@ private:
 
   // Updates camera input states
   void UpdateInput(float dt);
-
-  void ToggleCamera();
-  void ResetCamera();
 
   // Changes camera coordinates between global and
   // target relative space
@@ -90,10 +93,8 @@ private:
   void ToggleHUD();
 
 private:
-  bool m_CameraEnabled;
   bool m_FirstEnable;
   bool m_AutoReset;
-  bool m_UIRequestReset;
 
   bool m_GamepadDisabled;
   bool m_KbmDisabled;
