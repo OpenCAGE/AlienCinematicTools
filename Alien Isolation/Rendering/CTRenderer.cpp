@@ -96,8 +96,8 @@ void CTRenderer::UpdateMatrices()
   XMVECTOR vEyePos = XMLoadFloat3(&camera.AbsolutePosition);
 
   XMMATRIX rotMatrix = XMMatrixRotationQuaternion(qRotation);
-  XMMATRIX viewMatrix = XMMatrixLookToRH(vEyePos, rotMatrix.r[2], XMVectorSet(0, 1, 0, 0));
-  XMMATRIX projMatrix = XMMatrixPerspectiveFovRH(camera.Profile.FieldOfView, 1920 / 1080.f, 0.01f, 1000.f);
+  XMMATRIX viewMatrix = XMMatrixLookToRH(vEyePos, rotMatrix.r[2], XMVectorSet(0, 1, 0, 0)); //todo: this rotation is off
+  XMMATRIX projMatrix = XMMatrixPerspectiveFovRH(/*camera.Profile.FieldOfView*/75, 1920 / 1080.f, 0.01f, 1000.f); //todo: capture window resolution, and auto calculate FieldOfView conversion
 
   m_Matrices.EyePosition = XMFLOAT4(camera.AbsolutePosition.x, camera.AbsolutePosition.y, camera.AbsolutePosition.z, 1);
   XMStoreFloat4x4(&m_Matrices.View, viewMatrix);
@@ -191,6 +191,9 @@ std::unique_ptr<Model> CTRenderer::CreateModelFromResource(int id)
   DWORD szData = 0;
 
   util::GetResource(id, pData, szData);
+  if (pData == nullptr) {
+      util::log::Error("pData is null");
+  }
   std::unique_ptr<Model> pModel = Model::CreateFromCMO(g_d3d11Device, (const uint8_t*)pData, szData, *m_EffectFactory.get());
 
   if (pModel == nullptr)
