@@ -9,10 +9,14 @@
 #include <WICTextureLoader.h>
 #pragma comment(lib, "DirectXTK.lib")
 
-const char* g_creditsText = "The following libraries are used in making the Cinematic Tools:\n"
-"MinHook by Tsuda Kageyu, inih by Ben Hoyt, ImGui by Omar Cornut, C++ libraries by Boost, DirectXTK and DirectXTex by Microsoft.\n\n"
+const char* g_creditsText = ""
+"The following libraries are used in making the Cinematic Tools:\n"
+" - MinHook by Tsuda Kageyu, inih by Ben Hoyt\n"
+" - ImGui by Omar Cornut\n"
+" - C++ libraries by Boost\n"
+" - DirectXTK and DirectXTex by Microsoft.\n\n"
 "Thank you for using the tools and making awesome stuff with it!\n\n"
-"Remember to report bugs at www.cinetools.xyz/bugs";
+"Remember to report bugs at www.cinetools.xyz/bugs\n\n\n";
 
 UI::UI() :
   m_Enabled(false),
